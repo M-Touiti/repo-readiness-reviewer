@@ -1,0 +1,28 @@
+# Private design notes: never committed
+repo-readiness-reviewer.md
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+
+# Local run output (recorded fixtures under evals/fixtures/ and tests/fixtures/ are committed)
+runs/
+*.sqlite
+*.sqlite-*
+
+# Editors and OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
