@@ -93,8 +93,9 @@ Twelve yes-or-no checks. M1 implements the first group.
 
 ## Pinned versions
 
-Checked on 23 Nov 2026 against PyPI and the GitHub MCP server's releases. Exact pins go into `uv.lock` in task 1.1;
-a later bump is its own task and, if it changes what the model sees, re-records fixtures.
+Checked on 23 Nov 2026 against PyPI and the GitHub MCP server's releases. `pyproject.toml` holds compatible ranges
+from these versions upward and `uv.lock` holds the exact versions (task 1.1); CI installs with `uv sync --locked`.
+A later bump is its own task and, if it changes what the model sees, re-records fixtures.
 
 | Artifact | Version on check date | Used from | Note |
 |---|---|---|---|
@@ -104,7 +105,9 @@ a later bump is its own task and, if it changes what the model sees, re-records 
 | `langchain-anthropic` | 1.7.12 | M1 | Task 1.4 verifies how it sends structured output |
 | `langchain-core` | 1.8.4 | M1 | |
 | `langchain-mcp-adapters` | 0.3.2 | M1 | Pre-1.0: pin exactly |
-| `mcp` (Python SDK) | 2.3.0 | M1 as a client, M2 as a server | Must stay at 1.23.0 or later |
+| `mcp` (Python SDK) | 1.30.0 locked (2.3.0 is out) | M1 as a client, M2 as a server | `langchain-mcp-adapters` 0.3.2 requires `mcp<2`, so the 1.x line it is; must stay at 1.23.0 or later. Moving to 2.x waits for an adapters release that allows it |
+| `pydantic-settings` | 2.16.3 | M1 | Added in 1.1 for the settings object |
+| `hatchling` | 1.27 or later | M1 | Build backend |
 | GitHub MCP server | v2.2.0 (16 Nov 2026) | M1 | See decision 3 for how it is run |
 | `pydantic` | 2.14.4 | M1 | |
 | `typer` | 0.29.2 | M1 | |
@@ -128,7 +131,7 @@ Branches are named `m1/<task>`.
 
 | # | Task | Output | Status |
 |---|---|---|---|
-| 1.1 | **Skeleton and pins.** `pyproject.toml` (package `reviewer`, `src` layout, Python 3.12+, console script `review`), dependencies from the pins table locked in `uv.lock`, Ruff configuration (lint and format), pytest configuration, `.env.example` naming the two variables (`ANTHROPIC_API_KEY`, `GITHUB_TOKEN`) with no values, a settings object that reads them. Test: the package imports and the settings load from an environment without secrets. | `pyproject.toml`, `uv.lock`, `src/reviewer/`, `tests/` | |
+| 1.1 | **Skeleton and pins.** `pyproject.toml` (package `reviewer`, `src` layout, Python 3.12+, console script `review`), dependencies from the pins table locked in `uv.lock`, Ruff configuration (lint and format), pytest configuration, `.env.example` naming the two variables (`ANTHROPIC_API_KEY`, `GITHUB_TOKEN`) with no values, a settings object that reads them. Test: the package imports and the settings load from an environment without secrets. | `pyproject.toml`, `uv.lock`, `src/reviewer/`, `tests/` | done: 8 tests. `mcp` locked at 1.30.0, not 2.3.0, because `langchain-mcp-adapters` 0.3.2 requires `mcp<2` (pins table). `review` exists but only `--version` works until 1.9 |
 | 1.2 | **CI.** GitHub Actions workflow on push and pull request: `uv sync --locked`, Ruff check, Ruff format check, pytest. No secrets in the workflow; it must pass with no API key. Dependabot for `uv` and GitHub Actions. Needs the user: push `main` and confirm Actions is enabled. | `.github/workflows/ci.yml`, `.github/dependabot.yml` | |
 | 1.3 | **ADR 0001 and the ADR index.** Scope and fixed stages: twelve fixed checks, code routes and models only read and judge, three result values with `unknown` preferred to guessing, what is out of scope. Index lists the planned ADRs (0002 in 1.5, 0003 in M2). | `docs/adr/README.md`, `docs/adr/0001-scope-and-fixed-stages.md` | |
 | 1.4 | **Findings schema and the checks file.** Pydantic models: `Finding` (check id, result `pass`/`fail`/`unknown`, evidence path or URL, short reason) and `ReviewResult`. Validation rule: `pass` and `fail` need evidence, `unknown` does not. `checks.yaml` with the four Tests and CI checks: id, question, definition, evidence required, an example of each result. Loader with schema validation. Tests: valid and invalid findings, the loader rejects a malformed file, the four ids are present. | `src/reviewer/findings.py`, `src/reviewer/checks.py`, `src/reviewer/checks.yaml` | |

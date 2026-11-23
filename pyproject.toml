@@ -1,0 +1,62 @@
+[project]
+name = "repo-readiness-reviewer"
+version = "0.0.0"
+description = "Multi-agent review of a public GitHub repository for production readiness, with evidence for every finding."
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "langgraph>=1.2.24,<2",
+    "langchain-core>=1.8.4,<2",
+    "langchain-anthropic>=1.7.12,<2",
+    # Pre-1.0: pinned exactly; a bump is its own task.
+    "langchain-mcp-adapters==0.3.2",
+    # 1.x, not 2.x: langchain-mcp-adapters 0.3.2 requires mcp<2. Floor 1.23.0 for CVE-2025-66416.
+    "mcp>=1.30.0,<2",
+    "pydantic>=2.14.4,<3",
+    "pydantic-settings>=2.16.3,<3",
+    "typer>=0.29.2,<1",
+    "pyyaml>=6.0.4,<7",
+]
+
+[project.scripts]
+review = "reviewer.cli:app"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.2.0,<10",
+    "ruff==0.17.6",
+]
+
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/reviewer"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+src = ["src", "tests"]
+
+[tool.ruff.lint]
+select = [
+    "E", "W", # pycodestyle
+    "F",      # pyflakes
+    "I",      # isort
+    "B",      # bugbear
+    "UP",     # pyupgrade
+    "SIM",    # simplify
+    "RUF",    # ruff-specific
+    "S",      # bandit: secrets and unsafe calls
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/**" = ["S101"] # assert is how pytest tests
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = ["-ra", "--strict-markers", "--strict-config"]
+markers = [
+    "live: calls a real external service; skipped unless the credentials it needs are set",
+]
