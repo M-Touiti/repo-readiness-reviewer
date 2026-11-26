@@ -12,6 +12,7 @@ every finding links to its evidence.
 |---|---|
 | Roadmap, target architecture, M1 task breakdown | Written |
 | Python package, locked dependencies, settings | Done: 8 tests |
+| Findings schema and the four Tests and CI check definitions (`checks.yaml`) | Done: 57 tests; nothing calls them yet |
 | `review` command | Prints its version; the review itself is not implemented yet |
 | Decision records | [ADR 0001](docs/adr/0001-scope-and-fixed-stages.md) (scope and fixed stages) accepted; [index](docs/adr/README.md) |
 | CI | GitHub Actions on push to `main` and pull requests: Ruff and pytest on Python 3.12 and 3.13, no secrets; Dependabot for `uv` and Actions |

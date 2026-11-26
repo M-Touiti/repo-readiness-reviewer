@@ -1,0 +1,89 @@
+# Check definitions (ADR 0001). The reviewer's prompt is built from this file, so editing it changes what the
+# model sees and invalidates recorded fixtures. Adding or removing a check needs a new ADR.
+#
+# In M1 only the Tests and CI group exists. M2 adds the other two groups and serves this file through
+# checklist-mcp (list_checks(group), get_check(id)).
+#
+# Evidence is a path relative to the repository root at the reviewed commit, or an https:// URL.
+# A fail that rests on something being absent cites the directory whose listing shows it is missing
+# ("." is the repository root).
+
+version: 1
+
+checks:
+  - id: ci_workflow_exists
+    group: tests_ci
+    question: Does the repository have a CI workflow?
+    definition: >-
+      Pass when the repository contains configuration for a continuous-integration system that runs
+      automatically on pushes or pull requests: a GitHub Actions workflow in .github/workflows/ (a .yml or
+      .yaml file with a push or pull_request trigger), or the configuration file of another CI system
+      (.gitlab-ci.yml, .circleci/config.yml, azure-pipelines.yml, Jenkinsfile, .travis.yml, .buildkite/,
+      bitbucket-pipelines.yml). Workflows that only run on a schedule, on release or tag events, on issue or
+      label events, or by manual dispatch do not count. Fail when none exists. Unknown when the directories
+      could not be read or the triggers cannot be determined.
+    evidence: >-
+      For pass, the path of the workflow or CI configuration file. For fail, the directory listing that shows
+      none: .github/workflows if it exists, otherwise .github, otherwise ".".
+    examples:
+      pass: .github/workflows/ci.yml runs on push and pull_request.
+      fail: The repository has no .github directory and no other CI configuration at its root.
+      unknown: The listing of .github/workflows could not be read.
+
+  - id: ci_runs_tests
+    group: tests_ci
+    question: Does CI run the test suite?
+    definition: >-
+      Pass when a CI workflow that counts for ci_workflow_exists has a step that runs automated tests: a test
+      runner (pytest, tox, nox, npm test, yarn test, jest, vitest, go test, cargo test, mvn test or verify,
+      gradle test or check, dotnet test, rspec, phpunit, and the like), or a script or make target whose
+      content runs one. Steps that only lint, format, type-check, build or deploy do not count. A test step
+      that is commented out, or disabled with an always-false condition, does not count. Fail when CI exists
+      and no step runs tests, or when there is no CI. Unknown when the test step is inside a script, a
+      reusable workflow or an action that could not be read.
+    evidence: >-
+      The path of the workflow file that runs (or, for fail, lacks) the test step. If there is no CI, the same
+      directory as for ci_workflow_exists.
+    examples:
+      pass: The test job in .github/workflows/ci.yml runs "uv run pytest".
+      fail: .github/workflows/lint.yml, the only workflow, runs ruff and nothing else.
+      unknown: The only step calls scripts/ci.sh, and that file could not be read.
+
+  - id: integration_tests_exist
+    group: tests_ci
+    question: Does the repository have integration tests?
+    definition: >-
+      Pass when the repository contains automated tests that exercise several components together or a real
+      dependency (a database, a message broker, an HTTP server, a container, the file system, an external
+      process) rather than one unit in isolation. Signs include a directory or file named integration,
+      integration-tests, it, e2e or end-to-end; Java classes ending in IT; Testcontainers or docker compose
+      used by tests; tests marked integration or e2e; tests that start the application and call it over
+      HTTP. Tests of one function or class with its collaborators mocked are unit tests and do not count.
+      Fail when the repository has no tests, or when the tests that were read are all unit tests and no file
+      or directory suggests otherwise. Unknown when tests exist but what was read does not show which kind
+      they are.
+    evidence: >-
+      For pass, the path of one integration test file or directory. For fail, the test directory whose files
+      are all unit tests, or the repository root if there are no tests.
+    examples:
+      pass: tests/integration/test_api.py starts the server and calls it over HTTP.
+      fail: tests/ holds only unit tests of single modules with their dependencies mocked.
+      unknown: The repository has a test directory with forty files and the ones read do not settle it.
+
+  - id: last_ci_run_passed
+    group: tests_ci
+    question: Did the latest completed CI run on the default branch pass?
+    definition: >-
+      Look at the GitHub Actions workflows that count for ci_workflow_exists. For each, take its most recent
+      completed run on the default branch, ignoring runs that are queued, in progress, cancelled or skipped.
+      Pass when every such run concluded success. Fail when any concluded failure, timed_out or
+      startup_failure, or when the repository has no CI at all. Unknown when there are no completed runs on
+      the default branch, when CI is another system whose results cannot be read through GitHub, or when the
+      runs could not be listed.
+    evidence: >-
+      The https:// URL of the run that decides the result: for pass, the most recent passing run; for fail,
+      the failing run. If there is no CI, the same directory as for ci_workflow_exists.
+    examples:
+      pass: The latest completed run of CI on main concluded success.
+      fail: The latest completed run of Tests on main concluded failure.
+      unknown: The only CI is .gitlab-ci.yml, whose results are not visible through GitHub.
