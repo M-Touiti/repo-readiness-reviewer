@@ -1,0 +1,21 @@
+# Model configuration (ADR 0002). Changing model, effort or max_tokens changes what the model is asked,
+# so recorded fixtures stop matching and need re-recording. Prices only change the cost shown.
+
+model: claude-opus-5-5
+# Thinking is always on for this model; effort is the only control, and its API default (medium) is not
+# relied on.
+effort: high
+# Per response. Calls are not streamed, so this stays well under the SDK's non-streaming limit.
+max_tokens: 16000
+# A review stops calling the model once its spend reaches this; one call may overshoot it.
+spend_cap_usd: 3.00
+
+# US dollars per million tokens: Claude API first-party list prices as published on 3 Nov 2026.
+# Re-check against Anthropic's pricing page before task 1.10 records anything.
+# cache_write is the 5-minute cache write rate (1.25 times input).
+prices_usd_per_million:
+  claude-opus-5-5:
+    input: 4.00
+    output: 20.00
+    cache_read: 0.20
+    cache_write: 5.00
