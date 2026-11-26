@@ -1,0 +1,17 @@
+version: 2
+updates:
+  - package-ecosystem: uv
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    ignore:
+      # langchain-mcp-adapters 0.3.2 requires mcp<2; mcp moves to 2.x only with an adapters release that allows it.
+      - dependency-name: mcp
+        update-types: ["version-update:semver-major"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
